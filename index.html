@@ -1,0 +1,87 @@
+<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+<script>
+  var socket = io('http://10.131.137.215:3000');
+  var alias = "Anonymous";
+  var channel = "Ordinary";
+
+  socket.on('connect', function()
+  {
+    alias = prompt("Entre su alias");
+    socket.emit('newUser', alias, channel);
+  });
+
+  socket.on('message', function(doc, chan)
+  {
+    if (chan == channel)
+      $('#listMessages').append('<div>' +  doc.alias + ': ' + doc.content + '</div>');
+  });
+
+  socket.on('updateUsers', function(users, chan)
+  {
+    if (chan == channel)
+    {
+      $('#listUsers').empty();
+      $.each(users, function(key, value)
+      {
+        $('#listUsers').append('<li>' + value.alias + '</li> <br>');
+      });
+    }
+  });
+
+  $(function()
+  {
+    //Messages
+    $('#datasend').click( function()
+    {
+      var message = $('#data').val();
+
+      $('#data').val('');
+      socket.emit('newMessage', alias, message, channel);
+      console.log("emmited");
+    });
+
+    $('#data').keypress( function(e)
+    {
+      if (e.which == 13)
+      {
+        $(this).blur();
+        $('#datasend').focus().click();
+      }
+    });
+
+    //Channels
+    $('#dataChannelSend').click( function()
+    {
+      var newChannel = $('#dataChannel').val();
+
+      $('#dataChannel').val('');
+      socket.emit('changeChannel', alias, channel, newChannel);
+      channel = newChannel;
+      $('#listMessages').empty();
+    });
+
+    $('#dataChannel').keypress( function(e)
+    {
+      if (e.which == 13)
+      {
+        $(this).blur();
+        $('#dataChannelSend').focus().click();
+      }
+    });
+  });
+</script>
+
+<h1>Messages</h1>
+<ul id="listMessages"></ul>
+<input id="data" />
+<input type="button" id="datasend" value="send" />
+
+<h1>Users</h1>
+<ul id="listUsers"></ul>
+
+<h1>Channels</h1>
+<ul id="listChannels"</ul>
+<input id="dataChannel" />
+<input type="button" id="dataChannelSend" value="send" />
+
